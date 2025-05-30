@@ -26,6 +26,7 @@ async def websocket_endpoint(websocket: WebSocket):
             data = await websocket.receive_text()
             print("User said:", data)
 
+            # Add user's message to memory
             messages.append({"role": "user", "content": data})
 
             # Stream OpenAI response
@@ -36,16 +37,17 @@ async def websocket_endpoint(websocket: WebSocket):
             )
 
             full_reply = ""
+
             async for chunk in response:
                 content = chunk["choices"][0].get("delta", {}).get("content")
                 if content:
                     full_reply += content
                     await websocket.send_text(content)
 
+            # Add assistant's response to memory
             messages.append({"role": "assistant", "content": full_reply})
             await websocket.send_text("[END]")
 
     except Exception as e:
         print("WebSocket error:", e)
         await websocket.close()
-
